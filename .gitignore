@@ -75,3 +75,5 @@ Desktop.ini
 ## Local environment overrides
 .env
 .env.*
+
+Uploads/
