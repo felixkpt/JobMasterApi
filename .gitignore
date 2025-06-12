@@ -63,7 +63,7 @@ build/
 publish/
 artifacts/
 
-## Other files
+## Other files & folders
 *.tmp
 *.bak
 *.swp
@@ -71,9 +71,8 @@ artifacts/
 Thumbs.db
 ehthumbs.db
 Desktop.ini
+Uploads/
 
 ## Local environment overrides
 .env
 .env.*
-
-Uploads/
