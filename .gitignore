@@ -1,0 +1,77 @@
+## Build artifacts
+bin/
+obj/
+out/
+
+## User-specific files
+*.user
+*.userosscache
+*.suo
+*.sln.docstates
+
+## Mono Auto Generated Files
+mono_crash.*
+
+## Visual Studio
+.vscode/
+.vs/
+.vscode/*
+*.code-workspace
+
+## Rider
+.idea/
+
+## ASP.NET Core
+appsettings.*.json
+appsettings.Development.json
+appsettings.Local.json
+secrets.json
+
+## IIS/IISExpress
+*.vspscc
+*.vssscc
+.vsconfig
+/.vs/
+*.dbmdl
+*.dbproj.schemaview
+
+## NuGet
+*.nupkg
+*.snupkg
+.nuget/
+packages/
+project.lock.json
+project.fragment.lock.json
+
+## Resharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+## Logs
+*.log
+Logs/
+
+## Test Results
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+
+## Build Results
+build/
+publish/
+artifacts/
+
+## Other files
+*.tmp
+*.bak
+*.swp
+*.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+## Local environment overrides
+.env
+.env.*

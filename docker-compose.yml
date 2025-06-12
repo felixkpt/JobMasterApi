@@ -1,0 +1,13 @@
+name: "job-master"
+services:
+  db:
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "${DB_PASSWORD}"
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    ports: 
+      - 14332:1433
+    volumes:
+      - job-master-storage:/var/opt/mssql
+volumes:
+  job-master-storage:
