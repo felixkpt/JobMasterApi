@@ -59,37 +59,33 @@ builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen(options =>
 {
-	options.SwaggerDoc("v1", new OpenApiInfo { Title = "JobMaster API", Version = "v1" });
+    options.SwaggerDoc("v1", new OpenApiInfo { Title = "JobMaster API", Version = "v1" });
 
-	options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-	{
-		Description = "Enter 'Bearer' [space] and then your valid token.",
-		Name = "Authorization",
-		In = ParameterLocation.Header,
-		Type = SecuritySchemeType.Http,
-		Scheme = "bearer",
-		BearerFormat = "JWT"
-	});
+    // 🔐 JWT Auth Configuration
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Enter JWT token in the format: Bearer {your token}"
+    });
 
-	options.AddSecurityRequirement(new OpenApiSecurityRequirement
-	{
-		{
-			new OpenApiSecurityScheme
-			{
-				Reference = new OpenApiReference
-				{
-					Type = ReferenceType.SecurityScheme,
-					Id = "Bearer"
-				},
-				Scheme = "bearer",
-				Name = "Bearer",
-				In = ParameterLocation.Header
-			},
-			Array.Empty<string>()
-		}
-	});
-
-	options.OperationFilter<SecurityRequirementsOperationFilter>();
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
 });
 
 builder.Services.AddSwaggerExamplesFromAssemblyOf<LoginDtoExample>();
