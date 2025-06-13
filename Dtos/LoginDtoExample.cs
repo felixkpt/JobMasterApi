@@ -9,7 +9,7 @@ namespace JobMasterApi.Dtos
         {
             return new LoginDto
             {
-                Email = "user@example.com",
+                Email = "johndoe@example.com",
                 Password = "Demo@123"
             };
         }

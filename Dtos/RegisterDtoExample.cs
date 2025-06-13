@@ -1,5 +1,4 @@
 using Swashbuckle.AspNetCore.Filters;
-using JobMasterApi.Dtos;
 
 namespace JobMasterApi.Dtos
 {
@@ -9,7 +8,9 @@ namespace JobMasterApi.Dtos
         {
             return new RegisterDto
             {
-                Email = "user@example.com",
+                FirstName = "John",
+                LastName = "Doe",
+                Email = "johndoe@example.com",
                 Password = "Demo@123"
             };
         }

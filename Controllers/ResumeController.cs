@@ -1,63 +1,50 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using ResumeUploadApi.Data;
-using ResumeUploadApi.Models;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using ResumeUploadApi.Models;
+using ResumeUploadApi.Services.Interfaces;
+using ResumeUploadApi.Mappers;
 
 namespace ResumeUploadApi.Controllers;
 
+[Authorize]
 [ApiController]
-[Route("users/{userId}/resumes")]
-public class ResumeController : ControllerBase
+[Route("api/v1/resumes")]
+public class ResumeController : BaseController
 {
-    private readonly AppDbContext _db;
+    private readonly IResumeService _resumeService;
 
-    public ResumeController(AppDbContext db)
+    public ResumeController(IResumeService resumeService, UserManager<ApplicationUser> userManager)
+        : base(userManager)
     {
-        _db = db;
+        _resumeService = resumeService;
     }
 
-    // GET: /users/{userId}/resumes
     [HttpGet]
-    public async Task<IActionResult> GetResumes(int userId)
+    public async Task<IActionResult> GetResumes()
     {
-        var resumes = await _db.Resumes
-            .Where(r => r.UserId == userId)
-            .ToListAsync();
+        var userId = await GetUserIdAsync();
+        var resumes = await _resumeService.GetResumesAsync(userId);
 
-        return Ok(resumes);
+        var dto = resumes.ToDtoList();
+        return Ok(dto);
     }
 
-    // POST: /users/{userId}/resumes
     [HttpPost]
-    public async Task<IActionResult> UploadResume(int userId, IFormFile file)
+    public async Task<IActionResult> UploadResume(IFormFile file)
     {
-        if (file == null || file.Length == 0)
-            return BadRequest("No file uploaded.");
+        var userId = await GetUserIdAsync();
+        var resume = await _resumeService.UploadResumeAsync(userId, file);
+        var dto = resume.ToDto(); // prevent serialization issues
 
-        var uploadsFolder = Path.Combine("Uploads", $"user-{userId}");
-        Directory.CreateDirectory(uploadsFolder);
-
-        var filePath = Path.Combine(uploadsFolder, file.FileName);
-        using var stream = new FileStream(filePath, FileMode.Create);
-        await file.CopyToAsync(stream);
-
-        var resume = new Resume
-        {
-            UserId = userId,
-            FileName = file.FileName,
-            UploadedAt = DateTime.UtcNow
-        };
-
-        _db.Resumes.Add(resume);
-        await _db.SaveChangesAsync();
-
-        return CreatedAtAction(nameof(GetResumes), new { userId }, resume);
+        return CreatedAtAction(nameof(GetResumes), null, dto);
     }
 
-    [Authorize]
-    [HttpGet("secure-data")]
-    public IActionResult GetSecureData() => Ok("You are authorized!");
-
+    [HttpDelete("{resumeId}")]
+    public async Task<IActionResult> DeleteResume(Guid resumeId)
+    {
+        var userId = await GetUserIdAsync();
+        var success = await _resumeService.DeleteResumeAsync(userId, resumeId);
+        return success ? NoContent() : NotFound("Resume not found.");
+    }
 }

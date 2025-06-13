@@ -1,9 +1,16 @@
-namespace ResumeUploadApi.Models;
+using System.ComponentModel.DataAnnotations.Schema;
 
-public class Resume
+namespace ResumeUploadApi.Models
 {
-    public int Id { get; set; }
-    public int UserId { get; set; }
-    public string FileName { get; set; } = string.Empty;
-    public DateTime UploadedAt { get; set; } = DateTime.UtcNow;
+    public class Resume
+    {
+        public Guid Id { get; set; }
+
+        [ForeignKey("User")]
+        public string UserId { get; set; } = string.Empty;
+        public string FileName { get; set; } = string.Empty;
+        public string Content { get; set; } = string.Empty;
+        public DateTime UploadedAt { get; set; } = DateTime.UtcNow;
+        public ApplicationUser User { get; set; } = default!;
+    }
 }
