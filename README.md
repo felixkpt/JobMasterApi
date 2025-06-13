@@ -50,7 +50,10 @@ cd JobMasterApi
   },
   "ConnectionStrings": {
     "DefaultConnection": "Server=localhost;Database=JobMasterDb;User Id=sa;Password=YourPassword123;"
-  }
+  },
+	"OpenAI": {
+		"ApiKey": "sk-"
+	}
 }
 ```
 
