@@ -55,6 +55,7 @@ namespace ResumeUploadApi.Services
                 Id = Guid.NewGuid(),
                 UserId = userId,
                 FileName = file.FileName,
+                FilePath = filePath,
                 UploadedAt = DateTime.UtcNow,
                 Content = extractedText
             };
@@ -73,7 +74,7 @@ namespace ResumeUploadApi.Services
             if (resume == null)
                 return false;
 
-            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "UploadedResumes", userId.ToString());
+            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "Uploads", "Resumes", userId.ToString());
             var filePath = Path.Combine(uploadsFolder, resume.FileName);
 
             if (System.IO.File.Exists(filePath))
