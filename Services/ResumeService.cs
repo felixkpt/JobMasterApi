@@ -29,7 +29,7 @@ namespace ResumeUploadApi.Services
             if (file == null || file.Length == 0)
                 throw new ArgumentException("Invalid file.");
 
-            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "UploadedResumes", userId.ToString());
+            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "Uploads", "Resumes", userId.ToString());
             Directory.CreateDirectory(uploadsFolder);
 
             var filePath = Path.Combine(uploadsFolder, file.FileName);
