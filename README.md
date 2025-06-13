@@ -19,7 +19,7 @@
 
 ## 📦 Tech Stack
 
-- .NET 8 (Minimal APIs + Controllers)
+- .NET 9 (Minimal APIs + Controllers)
 - ASP.NET Identity
 - Entity Framework Core
 - SQL Server
