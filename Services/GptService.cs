@@ -2,6 +2,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using JobMasterApi.Dtos;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using ResumeUploadApi.Data;
@@ -14,12 +15,17 @@ namespace ResumeUploadApi.Services
         private readonly AppDbContext _db;
         private readonly HttpClient _httpClient;
         private readonly string _openAiKey;
+        private readonly bool _IsProd;
+        private readonly int _TruncateCharsTo = 200;
 
         public GptService(AppDbContext db, IConfiguration config)
         {
             _db = db;
             _httpClient = new HttpClient();
             _openAiKey = config["OpenAI:ApiKey"] ?? throw new Exception("OpenAI API key missing");
+            _IsProd = bool.TryParse(config["IsProd"], out var isProd)
+                ? isProd
+                : throw new Exception("IsProd config value missing or invalid");
         }
 
         public async Task<string> GenerateCoverLetterAsync(
@@ -42,11 +48,13 @@ namespace ResumeUploadApi.Services
                 @$"
 You are a professional career assistant. Based on the following resume and job description, write a compelling and concise cover letter. The letter source should contain {userName}, be dated {today} and signed by the applicant, {userName}. Address it to the hiring manager.
 
+{(_IsProd ? "Keep response at max " + _TruncateCharsTo + " characters." : "")}
+
 Resume:
-{resume.Content}
+{Truncate(resume.Content)}
 
 Job Description:
-{jobDescription}
+{Truncate(jobDescription)}
 
 Cover Letter:
 ";
@@ -71,11 +79,13 @@ Cover Letter:
                 @$"
 You are a resume analysis assistant. Based on the resume and job description below, provide a match score (from 0 to 100) and a brief explanation why:
 
+{(_IsProd ? "Keep response at max " + _TruncateCharsTo + " characters." : "")}
+
 Resume:
-{resume.Content}
+{Truncate(resume.Content)}
 
 Job Description:
-{jobDescription}
+{Truncate(jobDescription)}
 
 Respond in JSON format like:
 {{ ""score"": 85, ""insights"": ""Your experience closely matches the job's requirements..."" }}
@@ -84,7 +94,7 @@ Respond in JSON format like:
             var response = await CallOpenAiAsync(prompt);
             try
             {
-                var result = JsonSerializer.Deserialize<FitResult>(
+                var result = JsonSerializer.Deserialize<FitResultDto>(
                     response,
                     new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
                 );
@@ -132,12 +142,6 @@ Respond in JSON format like:
                 .GetString();
         }
 
-        private class FitResult
-        {
-            public int Score { get; set; }
-            public string Insights { get; set; }
-        }
-
         public async Task<int> CalculateMatchScoreAsync(string resumeText, string jobDescription)
         {
             // Optionally deprecated if `AnalyzeJobFitAsync` does both
@@ -156,16 +160,29 @@ Respond in JSON format like:
                 @$"
 As a resume advisor, provide improvement suggestions for the resume based on the following job description:
 
+{(_IsProd ? "Keep response at max " + _TruncateCharsTo + " characters." : "")}
+
 Resume:
-{resumeText}
+{Truncate(resumeText)}
 
 Job Description:
-{jobDescription}
+{Truncate(jobDescription)}
 
 Suggestions:
 ";
 
             return await CallOpenAiAsync(prompt);
+        }
+
+        private string Truncate(string input)
+        {
+            return string.IsNullOrEmpty(input)
+                ? ""
+                : (
+                    _IsProd && input.Length > _TruncateCharsTo
+                        ? input.Substring(0, _TruncateCharsTo) + "..."
+                        : input
+                );
         }
     }
 }
