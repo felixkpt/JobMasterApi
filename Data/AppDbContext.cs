@@ -9,6 +9,7 @@ namespace ResumeUploadApi.Data
         : IdentityDbContext<ApplicationUser>(options)
     {
         public DbSet<Resume> Resumes => Set<Resume>();
+        public DbSet<CoverLetter> CoverLetters { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

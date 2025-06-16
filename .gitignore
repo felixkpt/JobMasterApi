@@ -23,7 +23,6 @@ mono_crash.*
 
 ## ASP.NET Core
 appsettings.json
-appsettings.*.json
 appsettings.Development.json
 appsettings.Local.json
 secrets.json

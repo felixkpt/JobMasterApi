@@ -1,7 +1,9 @@
 using JobMasterApi.Extensions;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ResumeUploadApi.Data;
+using ResumeUploadApi.Exceptions;
 using ResumeUploadApi.Models;
 using ResumeUploadApi.Services;
 using ResumeUploadApi.Services.Interfaces;
@@ -24,6 +26,7 @@ builder.AddAuth();
 // ✅ Service Registration
 builder.Services.AddScoped<IGptService, GptService>();
 builder.Services.AddScoped<IResumeService, ResumeService>();
+builder.Services.AddScoped<ICoverLetterService, CoverLetterService>();
 
 builder.Services.AddAuthorization();
 
@@ -46,7 +49,17 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
 builder.AddSwaggerConfigs();
+
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+        CustomProblemDetailsFactory.Create(context.ModelState, context.HttpContext);
+});
+
 var app = builder.Build();
+
+// Global error handler (💥)
+app.UseGlobalExceptionHandler();
 
 // ✅ Swagger middleware
 app.UseSwagger();

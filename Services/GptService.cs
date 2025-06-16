@@ -1,10 +1,9 @@
-using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using JobMasterApi.Dtos;
+using JobMasterApi.Exceptions;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using ResumeUploadApi.Data;
 using ResumeUploadApi.Services.Interfaces;
 
@@ -15,6 +14,7 @@ namespace ResumeUploadApi.Services
         private readonly AppDbContext _db;
         private readonly HttpClient _httpClient;
         private readonly string _openAiKey;
+        private readonly string _model;
         private readonly bool _IsProd;
         private readonly int _TruncateCharsTo = 200;
 
@@ -23,6 +23,8 @@ namespace ResumeUploadApi.Services
             _db = db;
             _httpClient = new HttpClient();
             _openAiKey = config["OpenAI:ApiKey"] ?? throw new Exception("OpenAI API key missing");
+            _model = config["OpenAI:Model"] ?? throw new Exception("OpenAI API Model missing");
+
             _IsProd = bool.TryParse(config["IsProd"], out var isProd)
                 ? isProd
                 : throw new Exception("IsProd config value missing or invalid");
@@ -39,7 +41,7 @@ namespace ResumeUploadApi.Services
                 .FirstOrDefaultAsync(r => r.UserId == userId && r.Id == resumeId);
 
             if (resume == null)
-                throw new ArgumentException("Resume not found for this user.");
+                throw new AppException("Resume not found for this user.");
 
             var userName = resume.User.FullName;
             var today = DateTime.UtcNow.ToString("MMMM dd, yyyy");
@@ -48,7 +50,7 @@ namespace ResumeUploadApi.Services
                 @$"
 You are a professional career assistant. Based on the following resume and job description, write a compelling and concise cover letter. The letter source should contain {userName}, be dated {today} and signed by the applicant, {userName}. Address it to the hiring manager.
 
-{(_IsProd ? "Keep response at max " + _TruncateCharsTo + " characters." : "")}
+{(!_IsProd ? "Keep response at max " + _TruncateCharsTo + " characters." : "")}
 
 Resume:
 {Truncate(resume.Content)}
@@ -73,13 +75,13 @@ Cover Letter:
                 .FirstOrDefaultAsync(r => r.UserId == userId && r.Id == resumeId);
 
             if (resume == null)
-                throw new ArgumentException("Resume not found for this user.");
+                throw new AppException("Resume not found for this user.");
 
             var prompt =
                 @$"
 You are a resume analysis assistant. Based on the resume and job description below, provide a match score (from 0 to 100) and a brief explanation why:
 
-{(_IsProd ? "Keep response at max " + _TruncateCharsTo + " characters." : "")}
+{(!_IsProd ? "Keep response at max " + _TruncateCharsTo + " characters." : "")}
 
 Resume:
 {Truncate(resume.Content)}
@@ -106,11 +108,45 @@ Respond in JSON format like:
             }
         }
 
+        public async Task<string> GenerateAnswerForQuestionAsync(
+            string userId,
+            GenerateAnswerForQuestionRequestDto context
+        )
+        {
+            var resume = await _db
+                .Resumes.Include(r => r.User)
+                .FirstOrDefaultAsync(r => r.UserId == userId && r.Id == context.ResumeId);
+
+            if (resume == null)
+                throw new AppException("Resume not found for this user.");
+
+            var prompt = $"""
+                You are an experienced software engineer applying for the position of "{context.JobTitle}".
+                Based on the job description and your resume, write a professional and confident answer to the following interview question.
+                Respond in the first person, as if you're speaking directly to the interviewer.
+
+                {(!_IsProd ? "Keep the answer under " + _TruncateCharsTo + " characters. " : "")}
+
+                Job Description:
+                {Truncate(context.JobDescription)}
+
+                Resume:
+                {Truncate(resume.Content)}
+
+                Interview Question:
+                {context.Question}
+
+                Begin your answer:
+                """;
+
+            return await CallOpenAiAsync(prompt);
+        }
+
         private async Task<string> CallOpenAiAsync(string prompt)
         {
             var payload = new
             {
-                model = "gpt-4",
+                model = _model,
                 messages = new[]
                 {
                     new { role = "system", content = "You are a helpful assistant." },
@@ -160,7 +196,7 @@ Respond in JSON format like:
                 @$"
 As a resume advisor, provide improvement suggestions for the resume based on the following job description:
 
-{(_IsProd ? "Keep response at max " + _TruncateCharsTo + " characters." : "")}
+{(!_IsProd ? "Keep response at max " + _TruncateCharsTo + " characters." : "")}
 
 Resume:
 {Truncate(resumeText)}
@@ -179,7 +215,7 @@ Suggestions:
             return string.IsNullOrEmpty(input)
                 ? ""
                 : (
-                    _IsProd && input.Length > _TruncateCharsTo
+                    !_IsProd && input.Length > _TruncateCharsTo
                         ? input.Substring(0, _TruncateCharsTo) + "..."
                         : input
                 );

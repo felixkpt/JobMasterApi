@@ -1,4 +1,5 @@
 // File: Services/ResumeService.cs
+using JobMasterApi.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using ResumeUploadApi.Data;
 using ResumeUploadApi.Models;
@@ -27,7 +28,7 @@ namespace ResumeUploadApi.Services
         public async Task<Resume> UploadResumeAsync(string userId, IFormFile file)
         {
             if (file == null || file.Length == 0)
-                throw new ArgumentException("Invalid file.");
+                throw new AppException("Invalid file.");
 
             var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "Uploads", "Resumes", userId.ToString());
             Directory.CreateDirectory(uploadsFolder);
