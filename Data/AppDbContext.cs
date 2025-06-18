@@ -10,17 +10,21 @@ namespace ResumeUploadApi.Data
     {
         public DbSet<Resume> Resumes => Set<Resume>();
         public DbSet<CoverLetter> CoverLetters { get; set; }
+        public DbSet<PasswordReset> PasswordResets { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
 
-            builder.Entity<Resume>()
-                .HasOne(r => r.User)              // use the navigation property
-                .WithMany(u => u.Resumes)         // assuming you add this collection to ApplicationUser
+            builder
+                .Entity<Resume>()
+                .HasOne(r => r.User) // use the navigation property
+                .WithMany(u => u.Resumes) // assuming you add this collection to ApplicationUser
                 .HasForeignKey(r => r.UserId)
                 .IsRequired()
                 .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<PasswordReset>().HasIndex(p => new { p.UserId, p.Token }).IsUnique();
         }
     }
 }

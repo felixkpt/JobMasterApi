@@ -1,4 +1,4 @@
-namespace JobMasterApi.Dtos
+namespace JobMasterApi.Dtos.Auth
 {
     public class LoginDto
     {

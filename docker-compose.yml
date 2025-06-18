@@ -5,9 +5,17 @@ services:
       ACCEPT_EULA: "Y"
       SA_PASSWORD: "${DB_PASSWORD}"
     image: mcr.microsoft.com/mssql/server:2022-latest
-    ports: 
+    ports:
       - 14332:1433
     volumes:
       - job-master-storage:/var/opt/mssql
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 5050:8080
+    depends_on:
+      - db
 volumes:
   job-master-storage:

@@ -1,12 +1,8 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
-using JobMasterApi.Dtos;
+using JobMasterApi.Dtos.Auth;
+using JobMasterApi.Exceptions;
+using JobMasterApi.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
-using ResumeUploadApi.Models;
 using Swashbuckle.AspNetCore.Annotations;
 using Swashbuckle.AspNetCore.Filters;
 
@@ -16,82 +12,77 @@ namespace JobMasterApi.Controllers
     [Route("api/v1/auth")]
     public class AuthController : ControllerBase
     {
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly IConfiguration _configuration;
+        private readonly IAuthService _authService;
 
-        public AuthController(
-            UserManager<ApplicationUser> userManager,
-            IConfiguration configuration
-        )
+        public AuthController(IAuthService authService)
         {
-            _userManager = userManager;
-            _configuration = configuration;
+            _authService = authService;
         }
 
         [AllowAnonymous]
         [HttpPost("register")]
-        [SwaggerRequestExample(typeof(RegisterDto), typeof(Dtos.RegisterDtoExample))]
+        [SwaggerRequestExample(typeof(RegisterDto), typeof(RegisterDtoExample))]
         [SwaggerOperation(Summary = "Register user and return JWT token")]
         public async Task<IActionResult> Register([FromBody] RegisterDto dto)
         {
-            var user = new ApplicationUser
-            {
-                UserName = dto.Email,
-                Email = dto.Email,
-                FirstName = dto.FirstName,
-                LastName = dto.LastName,
-            };
+            var (success, token, errors) = await _authService.RegisterAsync(dto);
 
-            var result = await _userManager.CreateAsync(user, dto.Password);
+            if (!success && errors != null)
+                return ErrorResponseBuilder.FromIdentityErrors(errors, HttpContext);
 
-            if (!result.Succeeded)
-                return BadRequest(result.Errors);
-
-            // Generate token for newly registered user
-            var token = GenerateJwtToken(user);
             return Ok(new { token });
         }
 
         [AllowAnonymous]
         [HttpPost("login")]
-        [SwaggerRequestExample(typeof(LoginDto), typeof(Dtos.LoginDtoExample))]
+        [SwaggerRequestExample(typeof(LoginDto), typeof(LoginDtoExample))]
         [SwaggerOperation(Summary = "Authenticate user and return JWT token")]
         public async Task<IActionResult> Login([FromBody] LoginDto dto)
         {
-            var user = await _userManager.FindByEmailAsync(dto.Email);
-            if (user != null && await _userManager.CheckPasswordAsync(user, dto.Password))
+            var (success, token) = await _authService.LoginAsync(dto);
+
+            if (!success)
             {
-                var token = GenerateJwtToken(user);
-                return Ok(new { token });
+                return ErrorResponseBuilder.Single(
+                    "email",
+                    "Invalid email or password",
+                    HttpContext,
+                    StatusCodes.Status401Unauthorized
+                );
             }
 
-            return Unauthorized();
+            return Ok(new { token });
         }
 
-        private string GenerateJwtToken(ApplicationUser user)
+        [HttpPost("forgot-password")]
+        [SwaggerRequestExample(typeof(ForgotPasswordDto), typeof(ForgotPasswordDtoExample))]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
         {
-            var jwtSettings = _configuration.GetSection("Jwt");
+            var sent = await _authService.SendResetPasswordEmailAsync(dto.Email);
+            if (!sent)
+                throw new AppException("Email not found", 400);
 
-            var claims = new[]
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Email!), // OK
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()), // OK
-                new Claim(ClaimTypes.NameIdentifier, user.Id), // ✅ This MUST be user.Id
-                new Claim(ClaimTypes.Email, user.Email!), // optional
-            };
+            return Ok(new { message = "Reset email sent" });
+        }
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]!));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+        [HttpPost("verify-reset-token")]
+        public async Task<IActionResult> VerifyResetToken([FromBody] VerifyResetTokenDto dto)
+        {
+            var isValid = await _authService.VerifyResetTokenAsync(dto.Token);
+            if (!isValid)
+                throw new AppException("Invalid or expired token", 400);
 
-            var token = new JwtSecurityToken(
-                issuer: jwtSettings["Issuer"],
-                audience: jwtSettings["Audience"],
-                claims: claims,
-                expires: DateTime.Now.AddMinutes(double.Parse(jwtSettings["ExpiresInMinutes"]!)),
-                signingCredentials: creds
-            );
+            return Ok(new { message = "Token is valid" });
+        }
 
-            return new JwtSecurityTokenHandler().WriteToken(token);
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
+        {
+            var reset = await _authService.ResetPasswordAsync(dto);
+            if (!reset)
+                throw new AppException("Reset failed", 400);
+
+            return Ok(new { message = "Password successfully reset" });
         }
     }
 }

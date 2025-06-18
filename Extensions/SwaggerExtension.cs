@@ -1,5 +1,5 @@
 
-using JobMasterApi.Dtos;
+using JobMasterApi.Dtos.Auth;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Filters;
 
@@ -52,6 +52,7 @@ namespace JobMasterApi.Extensions
 
             builder.Services.AddSwaggerExamplesFromAssemblyOf<LoginDtoExample>();
             builder.Services.AddSwaggerExamplesFromAssemblyOf<RegisterDtoExample>();
+            builder.Services.AddSwaggerExamplesFromAssemblyOf<ForgotPasswordDtoExample>();
             builder.Services.AddSwaggerExamples();
 
             return builder;

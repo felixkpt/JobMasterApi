@@ -1,5 +1,8 @@
 using JobMasterApi.Extensions;
+using JobMasterApi.Services;
+using JobMasterApi.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ResumeUploadApi.Data;
@@ -17,16 +20,30 @@ builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(conn
 // ✅ Identity
 builder
     .Services.AddIdentity<ApplicationUser, IdentityRole>()
-    .AddEntityFrameworkStores<AppDbContext>();
+    .AddEntityFrameworkStores<AppDbContext>()
+    .AddDefaultTokenProviders();
+builder.Services.Configure<DataProtectionTokenProviderOptions>(options =>
+{
+    var resetTokenExpiresInValue = builder
+        .Configuration.GetSection("Auth:ResetTokenExpiresIn")
+        .Value;
+    var resetTokenExpiresIn = !string.IsNullOrEmpty(resetTokenExpiresInValue)
+        ? int.Parse(resetTokenExpiresInValue)
+        : 60; // default to 60 minutes if not set
+    options.TokenLifespan = TimeSpan.FromMinutes(resetTokenExpiresIn);
+});
 
 // ✅ JWT Authentication
 
 builder.AddAuth();
 
 // ✅ Service Registration
+builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IGptService, GptService>();
 builder.Services.AddScoped<IResumeService, ResumeService>();
 builder.Services.AddScoped<ICoverLetterService, CoverLetterService>();
+builder.Services.AddScoped<IEmailSender, EmailSender>();
+builder.Services.AddScoped<ITemplateService, TemplateService>();
 
 builder.Services.AddAuthorization();
 
@@ -77,5 +94,13 @@ app.UseAuthentication(); // 🔐 Important: UseAuthentication before UseAuthoriz
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.Use(
+    async (context, next) =>
+    {
+        await Task.Delay(2000);
+        await next.Invoke();
+    }
+);
 
 app.Run();

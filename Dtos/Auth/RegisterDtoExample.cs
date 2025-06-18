@@ -1,6 +1,6 @@
 using Swashbuckle.AspNetCore.Filters;
 
-namespace JobMasterApi.Dtos
+namespace JobMasterApi.Dtos.Auth
 {
     public class RegisterDtoExample : IExamplesProvider<RegisterDto>
     {
@@ -11,7 +11,7 @@ namespace JobMasterApi.Dtos
                 FirstName = "John",
                 LastName = "Doe",
                 Email = "johndoe@example.com",
-                Password = "Demo@123"
+                Password = "Demo@123",
             };
         }
     }

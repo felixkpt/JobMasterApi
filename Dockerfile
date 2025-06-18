@@ -1,15 +1,16 @@
-# Use .NET 9 SDK image
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
-WORKDIR /src
+WORKDIR /App
 
-# Copy everything and restore
-COPY . . 
+# Copy everything
+COPY . ./
+# Restore as distinct layers
 RUN dotnet restore
-RUN dotnet publish -c Release -o /app/publish
+# Build and publish a release
+RUN dotnet publish -o out
 
-# Final runtime image
-FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
-WORKDIR /app
-COPY --from=build /app/publish .
-
+# Build runtime image
+FROM mcr.microsoft.com/dotnet/aspnet:9.0
+WORKDIR /App
+COPY --from=build /App/out .
 ENTRYPOINT ["dotnet", "JobMasterApi.dll"]
+EXPOSE 8080
