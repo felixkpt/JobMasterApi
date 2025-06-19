@@ -12,5 +12,9 @@ namespace JobMasterApi.Services.Interfaces
         Task<bool> SendResetPasswordEmailAsync(string email);
         Task<bool> VerifyResetTokenAsync(string token);
         Task<bool> ResetPasswordAsync(ResetPasswordDto dto);
+        Task<(bool Success, IEnumerable<string>? Errors)> UpdatePasswordAsync(
+            string userId,
+            UpdatePasswordDto dto
+        );
     }
 }

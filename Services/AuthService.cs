@@ -102,8 +102,9 @@ namespace JobMasterApi.Services
             await _db.SaveChangesAsync();
 
             var numericCode = GenerateNumericCode();
-            
-            var callbackUrl = $"{_configuration["App:FrontendUrl"]}/reset-password?token={WebUtility.UrlEncode(token)}";
+
+            var callbackUrl =
+                $"{_configuration["App:FrontendUrl"]}/reset-password?token={WebUtility.UrlEncode(token)}";
 
             var resetTokenExpiresIn = _configuration["Auth:ResetTokenExpiresIn"]!;
             var resetTokenExpiresInHours = int.Parse(resetTokenExpiresIn) / 60;
@@ -158,11 +159,7 @@ namespace JobMasterApi.Services
             if (reset == null)
                 return false;
 
-            var result = await _userManager.ResetPasswordAsync(
-                reset.User,
-                dto.Token,
-                dto.Password
-            );
+            var result = await _userManager.ResetPasswordAsync(reset.User, dto.Token, dto.Password);
 
             if (!result.Succeeded)
                 return false;
@@ -171,6 +168,27 @@ namespace JobMasterApi.Services
             await _db.SaveChangesAsync();
 
             return true;
+        }
+
+        public async Task<(bool Success, IEnumerable<string>? Errors)> UpdatePasswordAsync(
+            string userId,
+            UpdatePasswordDto dto
+        )
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+                return (false, new[] { "User not found." });
+
+            var result = await _userManager.ChangePasswordAsync(
+                user,
+                dto.CurrentPassword,
+                dto.NewPassword
+            );
+
+            if (!result.Succeeded)
+                return (false, result.Errors.Select(e => e.Description));
+
+            return (true, null);
         }
 
         private string GenerateJwtToken(ApplicationUser user)
@@ -183,6 +201,7 @@ namespace JobMasterApi.Services
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 new Claim(ClaimTypes.NameIdentifier, user.Id),
                 new Claim(ClaimTypes.Email, user.Email!),
+                new Claim(ClaimTypes.Name, user.FullName ?? ""),
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]!));

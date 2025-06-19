@@ -44,6 +44,7 @@ builder.Services.AddScoped<IResumeService, ResumeService>();
 builder.Services.AddScoped<ICoverLetterService, CoverLetterService>();
 builder.Services.AddScoped<IEmailSender, EmailSender>();
 builder.Services.AddScoped<ITemplateService, TemplateService>();
+builder.Services.AddScoped<ICompanyAnalysisService, CompanyAnalysisService>();
 
 builder.Services.AddAuthorization();
 

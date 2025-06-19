@@ -58,7 +58,11 @@ public class ApplicationWizardController : BaseController
         [FromBody] GenerateAnswerForQuestionRequestDto request
     )
     {
-        if (!request.ResumeId.HasValue || request.ResumeId == Guid.Empty || string.IsNullOrWhiteSpace(request.Question))
+        if (
+            !request.ResumeId.HasValue
+            || request.ResumeId == Guid.Empty
+            || string.IsNullOrWhiteSpace(request.Question)
+        )
             return BadRequest("ResumeId and Question are required.");
 
         var userId = await GetUserIdAsync();

@@ -51,6 +51,24 @@ namespace JobMasterApi.Exceptions
             return new ObjectResult(response) { StatusCode = statusCode };
         }
 
+        public static IActionResult FromStrings(
+            string field,
+            IEnumerable<string> errors,
+            HttpContext httpContext,
+            int statusCode = StatusCodes.Status400BadRequest
+        )
+        {
+            var response = new
+            {
+                message = "One or more validation errors occurred.",
+                status = statusCode,
+                errors = new Dictionary<string, string[]> { [field] = errors.ToArray() },
+                traceId = httpContext.TraceIdentifier,
+            };
+
+            return new ObjectResult(response) { StatusCode = statusCode };
+        }
+
         private static string MapIdentityErrorCodeToField(string code)
         {
             return code switch
