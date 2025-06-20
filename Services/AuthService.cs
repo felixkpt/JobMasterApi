@@ -76,7 +76,7 @@ namespace JobMasterApi.Services
         public async Task<bool> SendResetPasswordEmailAsync(string email)
         {
             var user = await _userManager.FindByEmailAsync(email);
-            if (user == null)
+            if (user == null || string.IsNullOrEmpty(user.Email))
                 return false;
 
             // Invalidate old tokens
