@@ -230,10 +230,12 @@ Suggestions:
 
         var resultJson = await response.Content.ReadAsStringAsync();
         using var doc = JsonDocument.Parse(resultJson);
-        return doc
+        var content = doc
             .RootElement.GetProperty("choices")[0]
             .GetProperty("message")
             .GetProperty("content")
             .GetString();
+
+        return content ?? string.Empty;
     }
 }

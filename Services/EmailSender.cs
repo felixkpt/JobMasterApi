@@ -37,7 +37,9 @@ namespace JobMasterApi.Services
                 // Try different secure socket options
                 await smtp.ConnectAsync(
                     _config["Email:SmtpHost"],
-                    int.Parse(_config["Email:SmtpPort"]),
+                    int.TryParse(_config["Email:SmtpPort"], out var smtpPort)
+                        ? smtpPort
+                        : throw new InvalidOperationException("SMTP port configuration is missing or invalid."),
                     SecureSocketOptions.StartTlsWhenAvailable
                 );
 

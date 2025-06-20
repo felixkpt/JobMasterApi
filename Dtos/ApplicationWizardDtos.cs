@@ -10,7 +10,7 @@ namespace JobMasterApi.Dtos
         [Required]
         [MinLength(5, ErrorMessage = "Job title must be at least 5 characters.")]
         [MaxLength(3000, ErrorMessage = "Job title must be 100 characters or less.")]
-        public string JobTitle { get; set; }
+        public string JobTitle { get; set; } = string.Empty;
 
         [Required]
         [MinLength(5, ErrorMessage = "Job description must be at least 5 characters.")]
@@ -40,7 +40,7 @@ namespace JobMasterApi.Dtos
     class FitResultDto
     {
         public int Score { get; set; }
-        public string Insights { get; set; }
+        public string Insights { get; set; } = string.Empty;
     }
 
     public class GenerateAnswerForQuestionRequestDto

@@ -66,7 +66,7 @@ namespace ResumeUploadApi.Services
             if (letter == null)
                 throw new AppException("Cover letter not found.");
 
-            format = format?.ToLowerInvariant();
+            format = format?.ToLowerInvariant() ?? string.Empty;
 
             return format switch
             {
