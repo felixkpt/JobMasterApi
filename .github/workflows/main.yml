@@ -38,8 +38,6 @@ jobs:
           name: ZipDeployFile
           path: api-package.zip
 
-      - name: Deploy to IIS via WinRM
-        uses: petersouter/winrm-action@v1
   Deploy:
     needs: Build
     runs-on: ubuntu-latest
