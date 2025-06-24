@@ -51,5 +51,5 @@ jobs:
     - name: Deploy to app service
       uses: azure/webapps-deploy@v2
       with:
-        app-name: smartjobwizard-api
+        app-name: TestServiceWithDb
         package: ZipDeployFile/api-package.zip
