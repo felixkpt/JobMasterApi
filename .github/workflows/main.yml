@@ -1,17 +1,39 @@
 name: JobMasterApi
+
 on:
- push: 
-   branches: ["main"]
+  push:
+    branches: ["main"]
 
 jobs:
   Build:
-    runs-on: ubintu-latest
+    runs-on: ubuntu-latest
+
     steps:
-    - name: Checkout
-      uses: actions/checkout@4
-    - name: Setup .NET
-      uses: actions/setup-dotnet@4
-      with: 
-        dotnet-version: 8.0.x
-      
- 
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with: 
+          dotnet-version: 8.0.x
+
+      - name: Restore NuGet Dependencies
+        run: dotnet restore
+
+      - name: DotNet Build
+        run: dotnet build --no-restore --configuration Release
+
+      - name: DotNet Test
+        run: dotnet test --configuration Release --no-build --verbosity normal
+
+      - name: DotNet Publish
+        run: dotnet publish --no-build --configuration Release --output api-package
+
+      - name: Create ZIP file
+        run: zip -r api-package.zip api-package/*
+
+      - name: Publish ZIP file
+        uses: actions/upload-artifact@v4
+        with:
+          name: ZipDeployFile
+          path: api-package.zip
