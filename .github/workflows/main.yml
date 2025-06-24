@@ -39,11 +39,12 @@ jobs:
           path: api-package.zip
 
       - name: Deploy to IIS via WinRM
-        uses: gsoft-actions/psrp@v1
+        uses: petersouter/winrm-action@v1
         with:
           hostname: ${{ secrets.IIS_HOST }}
           username: ${{ secrets.IIS_USERNAME }}
           password: ${{ secrets.IIS_PASSWORD }}
+          port: 5985
           script: |
             Stop-WebAppPool -Name "JobMasterPool"
             Remove-Item -Recurse -Force "C:\inetpub\wwwroot\JobMaster" 
