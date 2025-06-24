@@ -40,13 +40,18 @@ jobs:
 
       - name: Deploy to IIS via WinRM
         uses: petersouter/winrm-action@v1
-        with:
-          hostname: ${{ secrets.IIS_HOST }}
-          username: ${{ secrets.IIS_USERNAME }}
-          password: ${{ secrets.IIS_PASSWORD }}
-          port: 5985
-          script: |
-            Stop-WebAppPool -Name "JobMasterPool"
-            Remove-Item -Recurse -Force "C:\inetpub\wwwroot\JobMaster" 
-            Expand-Archive -Path "C:\deploy\api-package.zip" -DestinationPath "C:\inetpub\wwwroot\JobMaster"
-            Start-WebAppPool -Name "JobMasterPool"
+  Deploy:
+    needs: Build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/download-artifact@v4
+      name: Get Zip Deploy File
+    - uses: azure/login@v1
+      name: Login to Azure
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    - name: Deploy to app service
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: smartjobwizard-api
+        package: ZipDeployFile/api-package.zip
